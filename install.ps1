@@ -78,10 +78,13 @@ $getDiskLetterByUser = Read-host "Merci de choisir votre lecteur pour le disk de
 
 ## Création de la VM
 cls
-New-VM -Name "$vmName" -Path "$getDiskLetterByUser:\VM" -MemoryStartupBytes "$vmRAM" -NewVHDPath "$getDiskLetterByUser:\VM\VM-TEST\$vmName.vhdx" -NewVHDSizeBytes "$vmSpaceDisk"GB -Generation 2 -Switch "External" -BootDevice NetworkAdapter
-Set-VM -Name "VM-TEST" -ProcessorCount 2 -CheckpointType Disabled
+New-VM -Name "$vmName" -Path "$getDiskLetterByUser:\VM" -MemoryStartupBytes "$vmRAM" -NewVHDPath "$getDiskLetterByUser:\VM\$vmName\$vmName.vhdx" -NewVHDSizeBytes "$vmSpaceDisk"GB -Generation 2 -Switch "External" -BootDevice NetworkAdapter
+Set-VM -Name "$vmName" -ProcessorCount $vmProc -CheckpointType Disabled
 
-
+## Get Graphic card
+$gpuCardBrand = (Get-WmiObject Win32_VideoController).AdapterCompatibility
+if ($gpuCardBrand -eq "NVIDIA"){"download this file"}
+if ($gpuCardBrand -eq "AMD"){"download this file"}
 ### Windows 10 super-light
 #### Package FR
 #### Steam cla
