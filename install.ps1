@@ -117,7 +117,3 @@ function GpuPreprar(){
         New-Item "C:\cla-cg\$gpuCardBrand\System32" -itemType Directory
         gpuPreprar
     }
-
-
-
-
