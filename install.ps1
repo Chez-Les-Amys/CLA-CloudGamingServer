@@ -113,9 +113,9 @@ function GpuPreprar(){
         Copy-Item -Path "C:\Windows\System32\DriverStore\FileRepository\$folderNameUID\" -Destination "C:\cla-cg\$gpuCardBrand\System32\HostDriverStore\FileRepository\$folderNameUID" -Recurse
         Copy-Item -Path "C:\Windows\System32\nv*.*" -Destination "C:\cla-cg\$gpuCardBrand\System32\"
         Copy-Item -Path "C:\cla-cg\installgpu.ps1" -Destination "C:\cla-cg\$gpuCardBrand\"
-        New-ISOFile -source C:\cla-cg\$gpuCardBrand -destinationIso C:\cla-cg\latest_$gpuCardBrand.iso
+        New-ISOFile -source "C:\cla-cg\$gpuCardBrand" -destinationIso "C:\cla-cg\latest_$gpuCardBrand2.iso"  -Force
         Set-VMDvdDrive -VMName "$vmName" -Path "C:\cla-cg\latest_$gpuCardBrand.iso"
-        Start-VM -Name "$vmName"
+        vmconnect localhost $vmName
 
 }
 
