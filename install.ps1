@@ -6,12 +6,31 @@ $vmProc = 0
 $vmSpaceDisk = 0
 
 
+# Import the file module needed
+. "C:\cla-cg\New-IsoFile.ps1"
+
+
+## Get Graphic card
+
+$gpuCardBrand = (Get-WmiObject Win32_VideoController).AdapterCompatibility
+if ($gpuCardBrand -eq "NVIDIA"){
+Write-Host "Your GPU is supported, let's go to start installation"
+}
+if ($gpuCardBrand -eq "AMD"){
+Write-Host "Your GPU is not Support for the moment, sorry. Autoclose in 15sec."
+Start-Sleep -Seconds 15 
+exit
+}
+
+
+
 # Check and install if necessary Hyper-v
 $hyperv = Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V-All -Online
 # Check if Hyper-V is enabled
 if($hyperv.State -eq "Enabled") {
-    Write-Host "Hyper-V is enabled."
+    Write-Host "Hyper-V is enabled. Continue ..."
 } else {
+    Write-Host "Hyper-V is not enabled. Install HyperV and after reboot your machine re-lunch this script"
     Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
 }
 
@@ -78,15 +97,27 @@ $getDiskLetterByUser = Read-host "Merci de choisir votre lecteur pour le disk de
 
 ## Création de la VM
 cls
-New-VM -Name "$vmName" -Path "$getDiskLetterByUser:\VM" -MemoryStartupBytes "$vmRAM" -NewVHDPath "$getDiskLetterByUser:\VM\$vmName\$vmName.vhdx" -NewVHDSizeBytes "$vmSpaceDisk"GB -Generation 2 -Switch "External" -BootDevice NetworkAdapter
+New-VM -Name "$vmName" -Path "$getDiskLetterByUser:\VM" -MemoryStartupBytes "$vmRAM" -NewVHDPath "$getDiskLetterByUser:\VM\$vmName\$vmName.vhdx" -NewVHDSizeBytes "$vmSpaceDisk"GB -Generation 2 -Switch "External"
 Set-VM -Name "$vmName" -ProcessorCount $vmProc -CheckpointType Disabled
 
-## Get Graphic card
-$gpuCardBrand = (Get-WmiObject Win32_VideoController).AdapterCompatibility
-if ($gpuCardBrand -eq "NVIDIA"){"download this file"}
-if ($gpuCardBrand -eq "AMD"){"download this file"}
-### Windows 10 super-light
-#### Package FR
-#### Steam cla
-#### Suchine Host Gaming + Custom config ( Port + Game - Desktop access )
+function GpuPreprar(){
+        $folderNameUID = Get-ChildItem -Path "C:\Windows\System32\DriverStore\FileRepository\" -Filter nv_dispi* | ForEach-Object -Process {[System.IO.Path]::GetFileName($_)}
+        Copy-Item -Path "C:\Windows\System32\DriverStore\FileRepository\$folderNameUID\" -Destination "C:\cla-cg\$gpuCardBrand\System32\HostDriverStore\FileRepository\$folderNameUID" -Recurse
+        Copy-Item -Path "C:\Windows\System32\nv*.*" -Destination "C:\cla-cg\$gpuCardBrand\System32\"
+        Copy-Item -Path "C:\cla-cg\installgpu.ps1" -Destination "C:\cla-cg\$gpuCardBrand\"
+        New-ISOFile -source C:\cla-cg\$gpuCardBrand -destinationIso C:\cla-cg\latest_$gpuCardBrand.iso
+        Set-VMDvdDrive -VMName "$vmName" -Path "C:\cla-cg\latest_$gpuCardBrand.iso"
+        Start-VM -Name "$vmName"
+
+}
+
+    if (Test-Path "C:\cla-cg\$gpuCardBrand"){
+        GpuPreprar
+    }else{
+        New-Item "C:\cla-cg\$gpuCardBrand\System32" -itemType Directory
+        gpuPreprar
+    }
+
+
+
 
