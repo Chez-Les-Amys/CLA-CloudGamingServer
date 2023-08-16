@@ -1,4 +1,4 @@
-if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator"))  
+﻿if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator"))  
 {  
   $arguments = "& '" +$myinvocation.mycommand.definition + "'"
   Start-Process powershell -Verb runAs -ArgumentList $arguments
@@ -40,11 +40,25 @@ if($hyperv.State -eq "Enabled") {
     Write-Host "Hyper-V is not enabled. Install HyperV and after reboot your machine re-lunch this script"
     #vérification de la configuration dans le BIOS
     if($checkRequirement){
-      Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+    try
+        {
+            Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All -ErrorAction Stop
+        }
+    catch
+        {
+            # check version Windows and Patch if possible
+            $editionWin = (Get-WindowsEdition -Online).edition
+            if(($editionWin -eq "core")-or($editionWin -eq "home")){
+                Write-Host "You have Windows $editionWin, this edition needed patch for install Hyper-V"
+                Start-Process "C:\cla-cg\Hyper-V-Enabler.bat"
+
+}  
+        }
     }else{
     #Vérification si $checkRequirement est vide, alors on vérifie que HYPER-V est activé d'une autre maniere
       if($checkRequirement -eq $empty ){
         Write-Host "Hyper-V already seems to be active in a second test, so let's try creating a VM."
+        Start-Sleep -Seconds 5
       }else{
         Write-Host "Virtualization options must be enabled in the BIOS"
         Write-Host "Your GPU is not Support for the moment, sorry. Autoclose in 15sec."
@@ -101,10 +115,10 @@ $getDiskLetterByUser = Read-host "Merci de choisir votre lecteur pour le disk de
 
  foreach ($letter in $driveLetter) 
     { if ($getDiskLetterByUser -eq "$letter") { 
-        $getDiskFreeSpace = (Get-PSDrive $getDiskLetter).Free
+        $getDiskFreeSpace = (Get-PSDrive $getDiskLetterByUser).Free
         $getDiskFreeSpaceinGB = [math]::Floor($getDiskFreeSpace /1GB)
        
-        Do { $vmSpaceDisk = Read-host "Choix de la quantité du HDD en GB ( de 25 à ""$getDiskFreeSpaceinGB""GB) "} 
+        Do { $vmSpaceDisk = Read-host "Choix de la quantité du HDD en GB ( de 25 à " + $getDiskFreeSpaceinGB + "GB) "} 
         while ((25..$getDiskFreeSpaceinGB) -notcontains $vmSpaceDisk)
 
 
@@ -117,7 +131,7 @@ $getDiskLetterByUser = Read-host "Merci de choisir votre lecteur pour le disk de
 
 ## Création de la VM
 cls
-New-VM -Name "$vmName" -Path "$getDiskLetterByUser:\VM" -MemoryStartupBytes "$vmRAM" -NewVHDPath "$getDiskLetterByUser:\VM\$vmName\$vmName.vhdx" -NewVHDSizeBytes "$vmSpaceDisk"GB -Generation 2 -Switch "External"
+New-VM -Name "$vmName" -Path "$getDiskLetterByUser"":\VM" -MemoryStartupBytes "$vmRAM" -NewVHDPath "$getDiskLetterByUser"":\VM\$vmName\$vmName.vhdx" -NewVHDSizeBytes "$vmSpaceDisk"GB -Generation 2 -Switch "External"
 Set-VM -Name "$vmName" -ProcessorCount $vmProc -CheckpointType Disabled
 
 function GpuPreprar(){
@@ -147,4 +161,3 @@ Set-VMGpuPartitionAdapter -VMName $vm -MinPartitionVRAM 80000000 -MaxPartitionVR
 Set-VM -GuestControlledCacheTypes $true -VMName $vm
 Set-VM -LowMemoryMappedIoSpace 1Gb -VMName $vm
 Set-VM –HighMemoryMappedIoSpace 32GB –VMName $vm
-
