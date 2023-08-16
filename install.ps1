@@ -54,30 +54,6 @@ if($hyperv.State -eq "Enabled") {
     }
 }
 
-(Get-ComputerInfo -property "HyperV*").HyperVRequirementVirtualizationFirmwareEnabled = true Bios is ok
-(Get-ComputerInfo -property "HyperV*").HyperVRequirementVirtualizationFirmwareEnabled = False Need to change in bios for activate the VT-X or Enabled SVM mod
-
-(Get-ComputerInfo -property "HyperV*").HyperVisorPresent = True, Hyper-v is installed
-Get-ComputerInfo -property "HyperV*").HyperVisorPresent = False, Hyper-v is not installed
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # After install hyper-v, download pre-request
 ## Création d'une vm
 ### Création d'un adapateur reseau externe 
