@@ -32,18 +32,25 @@ if ($gpuCardBrand -eq "AMD"){
 
 # Check and install if necessary Hyper-v
 $hyperv = Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V-All -Online
+$checkRequirement = (Get-ComputerInfo -property "HyperV*").HyperVRequirementVirtualizationFirmwareEnabled
 # Check if Hyper-V is enabled
 if($hyperv.State -eq "Enabled") {
     Write-Host "Hyper-V is enabled. Continue ..."
 } else {
     Write-Host "Hyper-V is not enabled. Install HyperV and after reboot your machine re-lunch this script"
     #vérification de la configuration dans le BIOS
-    $checkRequirement = (Get-ComputerInfo -property "HyperV*").HyperVRequirementVirtualizationFirmwareEnabled
     if($checkRequirement){
       Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
     }else{
     #Vérification si $checkRequirement est vide, alors on vérifie que HYPER-V est activé d'une autre maniere
-      if($checkRequirement -eq $empty ){Write-Host "Hyper-V semble deja etre acité, testons de créer une VM"}else{Write-Host "Il faut activé les options de virtualisation dans le BIOS"}
+      if($checkRequirement -eq $empty ){
+        Write-Host "Hyper-V already seems to be active in a second test, so let's try creating a VM."
+      }else{
+        Write-Host "Virtualization options must be enabled in the BIOS"
+        Write-Host "Your GPU is not Support for the moment, sorry. Autoclose in 15sec."
+        Start-Sleep -Seconds 15
+        exit
+      }
     }
 }
 
