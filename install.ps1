@@ -93,11 +93,19 @@ cls
 ## Demande de la quantité RAM
 cls
 for ($i=0 ;$i -le 0){
-    if ($vmName  -eq ""){$vmName = Read-Host "Veuillez choisir un nom pour la VM"}else {
+    if (($vmName  -eq "")-or($vmName  -eq  $empty)){$vmName = Read-Host "Veuillez choisir un nom pour la VM"}else {
     $i++ } 
 }
-Do { $vmRAM = Read-host "Choix de la quantité de la RAM en GB ( de 4 à 32GB ) "} 
-while ((4..32) -notcontains $vmRAM)
+
+
+
+$totalPhysicalRam = ((Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property capacity -Sum).sum /1gb) - 4
+
+Do { $vmRAM = Read-host "Select quantity Ram for VM. Recommend 4GB minimal, if your system as 8GB ( to 4GB as " + $totalPhysicalRam + "GB ) "} 
+while ((4..$totalPhysicalRam) -notcontains $vmRAM)
+
+
+
 
 ## Demande de la quantité CPU
 cls
@@ -127,11 +135,13 @@ $getDiskLetterByUser = Read-host "Merci de choisir votre lecteur pour le disk de
     }
 
 
-
+$vmSpaceDisk1 = [int64]$vmSpaceDisk * 1GB
+$vmRAMRH = [int64]$vmRAM * 1GB
+$fullPath = $getDiskLetterByUser + ":\VMs"
 
 ## Création de la VM
 cls
-New-VM -Name "$vmName" -Path "$getDiskLetterByUser"":\VM" -MemoryStartupBytes "$vmRAM" -NewVHDPath "$getDiskLetterByUser"":\VM\$vmName\$vmName.vhdx" -NewVHDSizeBytes "$vmSpaceDisk"GB -Generation 2 -Switch "External"
+New-VM -Name "$vmName" -Path "$fullPath" -MemoryStartupBytes "$vmRAMRH" -NewVHDPath "$fullPath\$vmName\$vmName.vhdx" -NewVHDSizeBytes "$vmSpaceDisk" -Generation 2 -Switch "External"
 Set-VM -Name "$vmName" -ProcessorCount $vmProc -CheckpointType Disabled
 
 function GpuPreprar(){
