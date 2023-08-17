@@ -141,17 +141,18 @@ $fullPath = $getDiskLetterByUser + ":\VMs"
 
 ## Création de la VM
 cls
-New-VM -Name "$vmName" -Path "$fullPath" -MemoryStartupBytes "$vmRAMRH" -NewVHDPath "$fullPath\$vmName\$vmName.vhdx" -NewVHDSizeBytes "$vmSpaceDisk" -Generation 2 -Switch "External"
+New-VM -Name "$vmName" -Path "$fullPath" -MemoryStartupBytes "$vmRAMRH" -NewVHDPath "$fullPath\$vmName\$vmName.vhdx" -NewVHDSizeBytes "$vmSpaceDisk1" -Generation 2 -Switch "External"
 Set-VM -Name "$vmName" -ProcessorCount $vmProc -CheckpointType Disabled
+Add-VMDvdDrive -VMName "$vmName"
 
 function GpuPreprar(){
         $folderNameUID = Get-ChildItem -Path "C:\Windows\System32\DriverStore\FileRepository\" -Filter nv_dispi* | ForEach-Object -Process {[System.IO.Path]::GetFileName($_)}
         Copy-Item -Path "C:\Windows\System32\DriverStore\FileRepository\$folderNameUID\" -Destination "C:\cla-cg\$gpuCardBrand\System32\HostDriverStore\FileRepository\$folderNameUID" -Recurse
         Copy-Item -Path "C:\Windows\System32\nv*.*" -Destination "C:\cla-cg\$gpuCardBrand\System32\"
         Copy-Item -Path "C:\cla-cg\installgpu.ps1" -Destination "C:\cla-cg\$gpuCardBrand\"
-        New-ISOFile -source "C:\cla-cg\$gpuCardBrand" -destinationIso "C:\cla-cg\latest_$gpuCardBrand2.iso"  -Force
+        New-ISOFile -source "C:\cla-cg\$gpuCardBrand" -destinationIso "C:\cla-cg\latest_$gpuCardBrand.iso"  -Force
         Set-VMDvdDrive -VMName "$vmName" -Path "C:\cla-cg\latest_$gpuCardBrand.iso"
-        vmconnect localhost $vmName
+        
 
 }
 
@@ -163,11 +164,11 @@ function GpuPreprar(){
     }
 
 
-﻿$vm = "$vmName"
+Add-VMGpuPartitionAdapter -VMName $vmName
+Set-VMGpuPartitionAdapter -VMName $vmName -MinPartitionVRAM 80000000 -MaxPartitionVRAM 100000000 -OptimalPartitionVRAM 100000000 -MinPartitionEncode 80000000 -MaxPartitionEncode 100000000 -OptimalPartitionEncode 100000000 -MinPartitionDecode 80000000 -MaxPartitionDecode 100000000 -OptimalPartitionDecode 100000000 -MinPartitionCompute 80000000 -MaxPartitionCompute 100000000 -OptimalPartitionCompute 100000000
 
-Add-VMGpuPartitionAdapter -VMName $vm
-Set-VMGpuPartitionAdapter -VMName $vm -MinPartitionVRAM 80000000 -MaxPartitionVRAM 100000000 -OptimalPartitionVRAM 100000000 -MinPartitionEncode 80000000 -MaxPartitionEncode 100000000 -OptimalPartitionEncode 100000000 -MinPartitionDecode 80000000 -MaxPartitionDecode 100000000 -OptimalPartitionDecode 100000000 -MinPartitionCompute 80000000 -MaxPartitionCompute 100000000 -OptimalPartitionCompute 100000000
+Set-VM -GuestControlledCacheTypes $true -VMName $vmName
+Set-VM -LowMemoryMappedIoSpace 1Gb -VMName $vmName
+Set-VM –HighMemoryMappedIoSpace 32GB –VMName $vmName
 
-Set-VM -GuestControlledCacheTypes $true -VMName $vm
-Set-VM -LowMemoryMappedIoSpace 1Gb -VMName $vm
-Set-VM –HighMemoryMappedIoSpace 32GB –VMName $vm
+vmconnect localhost $vmName
